@@ -1,0 +1,81 @@
+local Player = game.Players.LocalPlayer
+local UserInputService = game:service'UserInputService'
+repeat
+wait()
+until Player.Character ~= nil
+repeat
+wait()
+until Player:findFirstChild("PlayerGui") ~= nil
+local Humanoid = Player.Character.Humanoid
+local RecoilAmount = Player.PlayerScripts:WaitForChild("Client"):WaitForChild("Recoil")
+local WeaponHUD = Player.PlayerGui:WaitForChild("MainGUI"):WaitForChild("StatsHUD"):WaitForChild("WeaponHUD")
+local Crosshair = Player.PlayerGui:WaitForChild("CrosshairGUI"):WaitForChild("Center")
+local Modules = game.ReplicatedStorage:WaitForChild("Modules")
+local WC = require(Modules:WaitForChild("WeaponCore"))
+local MouseDown = false
+local Ammo = math.huge
+local Clip = math.huge
+local Char = Player.Character
+local Anims = {}
+
+UserInputService.InputBegan:Connect(function(inputObject)
+    if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
+        MouseDown = true
+    end
+end)
+UserInputService.InputEnded:Connect(function(inputObject)
+    if inputObject.UserInputType == Enum.UserInputType.MouseButton1 then
+        MouseDown = false
+    end
+end)
+
+function PlayAnimation(id, t)
+local animation = Instance.new("Animation", Humanoid)
+animation.AnimationId = "http://www.roblox.com/Asset?ID=" .. id
+local animTrack = Humanoid:LoadAnimation(animation)
+animTrack:Play()
+table.insert(Anims, animTrack)
+local finished = false
+animTrack.Stopped:connect(function()
+finished = true
+end)
+repeat
+wait()
+until finished
+animTrack = nil
+animation:Destroy()
+end
+function GetMousePoint(X, Y)
+local ignore = {
+workspace.Ignore,
+Char,
+workspace.Water
+}
+local Mag = workspace.Camera:ScreenPointToRay(X, Y)
+local NewRay = Ray.new(Mag.Origin, Mag.Direction * 2000)
+local Target, Position = workspace:FindPartOnRayWithIgnoreList(NewRay, ignore, false, true)
+return Position
+end
+spawn(function()
+while wait() do
+tool = game.Players.LocalPlayer.Character:FindFirstChildWhichIsA("BackpackItem")
+if MouseDown and tool and Player.Character.Humanoid.Health > 0 then
+if tool:FindFirstChild("RifleScript") or tool:FindFirstChild("PistolScript") then
+RecoilAmount.Value = Vector3.new(0,0,0)
+WeaponHUD.Ammo.Ammo1.Text = Ammo
+WeaponHUD.Ammo.Ammo2.Text = Clip
+WC.PlaySound(Char, 1772743949, Torso)
+WC.ShootGun(Char, Char, GetMousePoint(Crosshair.AbsolutePosition.X, Crosshair.AbsolutePosition.Y), tool.Name, 100, 0)
+spawn(function()
+PlayAnimation(1241010205, true)
+end)
+elseif tool:FindFirstChild("ShotgunScript") then
+RecoilAmount.Value = Vector3.new(0,0,0)
+WeaponHUD.Ammo.Ammo1.Text = Ammo
+WeaponHUD.Ammo.Ammo2.Text = Clip
+WC.PlaySound(Char, 255061221, Torso)
+WC.ShootShotgun(Char, Char, GetMousePoint(Crosshair.AbsolutePosition.X, Crosshair.AbsolutePosition.Y), tool.Name, 100, 0, 20)
+end
+end
+end
+end)
